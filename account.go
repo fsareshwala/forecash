@@ -67,7 +67,8 @@ func (a *Account) save() {
 func (a *Account) predict(until time.Time) []Transaction {
 	transactions := []Transaction{}
 
-	for _, event := range a.Events {
+	for i := range a.Events {
+		event := &a.Events[i]
 		transactions = append(transactions, event.predict(until)...)
 	}
 

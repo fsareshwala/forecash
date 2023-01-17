@@ -40,14 +40,14 @@ func (e *Event) nextOccurrence(from time.Time) time.Time {
 	return e.Date.AddDate(100, 0, 0)
 }
 
-func (e Event) predict(until time.Time) []Transaction {
+func (e *Event) predict(until time.Time) []Transaction {
 	transactions := []Transaction{}
 
 	now := e.Date
 	for now.Before(until) {
 		transactions = append(transactions, Transaction{
 			date:  now,
-			event: &e,
+			event: e,
 		})
 
 		now = e.nextOccurrence(now)
