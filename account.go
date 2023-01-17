@@ -8,6 +8,23 @@ import (
 	"time"
 )
 
+type Transaction struct {
+	date  time.Time
+	event *Event
+}
+
+type byDate []Transaction
+
+func (t byDate) Len() int {
+	return len(t)
+}
+func (t byDate) Swap(i int, j int) {
+	t[i], t[j] = t[j], t[i]
+}
+func (t byDate) Less(i int, j int) bool {
+	return t[i].date.Before(t[j].date)
+}
+
 type Account struct {
 	config_path string
 
@@ -39,27 +56,6 @@ func (a *Account) save() {
 	if err := os.WriteFile(a.config_path, result, 0); err != nil {
 		log.Fatal(err)
 	}
-}
-
-type Transaction struct {
-	date  time.Time
-	event *Event
-}
-
-func (t *Transaction) complete() {
-
-}
-
-type byDate []Transaction
-
-func (t byDate) Len() int {
-	return len(t)
-}
-func (t byDate) Swap(i int, j int) {
-	t[i], t[j] = t[j], t[i]
-}
-func (t byDate) Less(i int, j int) bool {
-	return t[i].date.Before(t[j].date)
 }
 
 func (a *Account) predict(until time.Time) []Transaction {
