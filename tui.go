@@ -6,6 +6,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/table"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -73,6 +74,9 @@ func newTui(account *Account) Tui {
 		table.WithWidth(width),
 		table.WithColumns(columns),
 	)
+
+	t.KeyMap.HalfPageUp = key.NewBinding(key.WithDisabled())
+	t.KeyMap.HalfPageDown = key.NewBinding(key.WithDisabled())
 
 	s := table.DefaultStyles()
 	s.Header = s.Header.
