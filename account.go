@@ -104,3 +104,15 @@ func (a *Account) txComplete(tx *Transaction, update_balance bool) {
 
 	tx.event.Date = tx.event.nextOccurrence(tx.event.Date)
 }
+
+func (a *Account) txDatePrevious(tx *Transaction) {
+	if tx.event.Frequency == Once {
+		tx.event.Date = tx.event.Date.AddDate(0, 0, -1)
+	}
+}
+
+func (a *Account) txDateNext(tx *Transaction) {
+	if tx.event.Frequency == Once {
+		tx.event.Date = tx.event.Date.AddDate(0, 0, 1)
+	}
+}

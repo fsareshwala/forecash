@@ -28,17 +28,18 @@ func (t Tui) Init() tea.Cmd {
 func (t Tui) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 
+	tx := t.transactions[t.table.Cursor()]
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
-		case "x":
-			tx := t.transactions[t.table.Cursor()]
-			t.account.txComplete(tx, true)
-			t.regenerateRows()
+		case "h":
+			t.account.txDatePrevious(&tx)
+		case "l":
+			t.account.txDateNext(&tx)
 		case "d":
-			tx := t.transactions[t.table.Cursor()]
-			t.account.txComplete(tx, false)
-			t.regenerateRows()
+			t.account.txComplete(&tx, false)
+		case "x":
+			t.account.txComplete(&tx, true)
 		case "w":
 			t.account.save()
 		case "q":
@@ -46,6 +47,7 @@ func (t Tui) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 	}
 
+	t.regenerateRows()
 	t.table, cmd = t.table.Update(msg)
 	return t, cmd
 }
