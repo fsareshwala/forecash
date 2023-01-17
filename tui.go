@@ -53,7 +53,11 @@ func (t Tui) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (t Tui) View() string {
-	return baseStyle.Render(t.table.View()) + "\n"
+	style := lipgloss.NewStyle().
+		BorderStyle(lipgloss.NormalBorder()).
+		BorderForeground(lipgloss.Color("240"))
+
+	return style.Render(t.table.View()) + "\n"
 }
 
 func newTui(account *Account) Tui {
