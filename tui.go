@@ -31,11 +31,13 @@ func (t Tui) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "x":
-			i := t.table.Cursor()
-			transaction := t.transactions[i]
-			t.account.Balance += transaction.event.Amount
-			transaction.complete()
-		// case "d":
+			tx := t.transactions[t.table.Cursor()]
+			t.account.txComplete(tx, true)
+			t.regenerateRows()
+		case "d":
+			tx := t.transactions[t.table.Cursor()]
+			t.account.txComplete(tx, false)
+			t.regenerateRows()
 		case "w":
 			t.account.save()
 		case "q":
