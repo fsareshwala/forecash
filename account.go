@@ -116,3 +116,9 @@ func (a *Account) txDateNext(tx *Transaction) {
 		tx.event.Date = tx.event.Date.AddDate(0, 0, 1)
 	}
 }
+
+func (a *Account) txSetToToday(tx *Transaction) {
+	if tx.event.Frequency == Once {
+		tx.event.Date = time.Now().Round(0)
+	}
+}
