@@ -68,9 +68,9 @@ func newTui(account *Account) Tui {
 	columns := []table.Column{
 		{Title: "Date", Width: 20},
 		{Title: "Description", Width: 40},
-		{Title: "Income", Width: 12},
-		{Title: "Expense", Width: 12},
-		{Title: "Balance", Width: 12},
+		{Title: "Income", Width: 15},
+		{Title: "Expense", Width: 15},
+		{Title: "Balance", Width: 15},
 	}
 
 	width, height, err := term.GetSize(int(os.Stdout.Fd()))
