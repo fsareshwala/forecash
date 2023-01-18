@@ -145,4 +145,12 @@ func (a *Account) txSetToToday(tx *Transaction) {
 		tx.event.Date = time.Now().Round(0)
 		return
 	}
+
+	new_event := *tx.event
+	new_event.Frequency = Once
+	new_event.Date = time.Now().Round(0)
+	a.Events = append(a.Events, new_event)
+
+	tx.event.Date = tx.event.nextOccurrence(tx.event.Date)
+
 }
