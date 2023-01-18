@@ -42,6 +42,8 @@ func (t Tui) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			t.account.txComplete(&tx, true)
 		case "t":
 			t.account.txSetToToday(&tx)
+		case "r":
+			t.account.reload()
 		case "w":
 			t.account.save()
 		case "q":

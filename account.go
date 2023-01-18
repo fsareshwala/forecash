@@ -64,6 +64,17 @@ func (a *Account) save() {
 	}
 }
 
+func (a *Account) reload() {
+	account_str, err := os.ReadFile(a.config_path)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if err := json.Unmarshal(account_str, a); err != nil {
+		log.Fatal(err)
+	}
+}
+
 func (a *Account) predict(until time.Time) []Transaction {
 	transactions := []Transaction{}
 
