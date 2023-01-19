@@ -125,15 +125,11 @@ func (a *Account) txComplete(tx *Transaction, update_balance bool) {
 }
 
 func (a *Account) txDatePrevious(tx *Transaction) {
-	if !tx.repeats() {
-		tx.event.Date = tx.event.Date.AddDate(0, 0, -1)
-	}
+	tx.event.Date = tx.event.Date.AddDate(0, 0, -1)
 }
 
 func (a *Account) txDateNext(tx *Transaction) {
-	if !tx.repeats() {
-		tx.event.Date = tx.event.Date.AddDate(0, 0, 1)
-	}
+	tx.event.Date = tx.event.Date.AddDate(0, 0, 1)
 }
 
 func (a *Account) txSetToToday(tx *Transaction) {
