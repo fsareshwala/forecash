@@ -138,10 +138,13 @@ func (a *Account) txDateNext(tx *Transaction) {
 
 func (a *Account) txSetToToday(tx *Transaction) {
 	if tx.repeats() && !tx.isFirstOccurrence() {
+		// doesn't make sense to place a future occurrence of a repeating event to be paid today when
+		// there is an earlier occurrence
 		return
 	}
 
 	if !tx.repeats() {
+		// no need to do any splitting logic if the event never repeats
 		tx.event.Date = time.Now().Round(0)
 		return
 	}
