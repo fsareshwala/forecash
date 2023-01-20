@@ -151,5 +151,4 @@ func (a *Account) txSetToToday(tx *Transaction) {
 	a.Events = append(a.Events, new_event)
 
 	tx.event.Date = tx.event.nextOccurrence(tx.event.Date)
-
 }

@@ -123,7 +123,7 @@ func (t *Tui) regenerateRows() {
 	ac := accounting.Accounting{Symbol: "$", Precision: 2}
 	balance := t.account.Balance
 
-	rows := []table.Row{}
+	rows := make([]table.Row, 0, len(t.transactions))
 	for _, t := range t.transactions {
 		var income string
 		var expense string
