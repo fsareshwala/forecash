@@ -62,7 +62,7 @@ func (a *Account) deleteEvent(i int) {
 }
 
 func (a *Account) save() {
-	result, err := json.Marshal(a)
+	result, err := json.MarshalIndent(a, "", "    ")
 	if err != nil {
 		log.Fatal(err)
 	}
