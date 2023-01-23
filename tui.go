@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/charmbracelet/bubbles/key"
@@ -59,14 +60,14 @@ func (t Tui) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (t Tui) View() string {
 	ac := accounting.Accounting{Symbol: "$", Precision: 2}
 	formatted_balance := ac.FormatMoney(t.account.Balance)
-	current_balance := fmt.Sprintf("Current balance: %s", formatted_balance)
 
 	style := lipgloss.NewStyle().
 		BorderStyle(lipgloss.NormalBorder()).
 		BorderForeground(lipgloss.Color("240"))
 	table := style.Render(t.table.View())
 
-	return fmt.Sprintf("%110s\n%s\n", current_balance, table)
+	prefix := strings.Repeat(" ", 83)
+	return fmt.Sprintf("%sCurrent balance: %s\n%s\n", prefix, formatted_balance, table)
 }
 
 func newTui(account *Account) Tui {
