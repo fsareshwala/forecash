@@ -79,28 +79,26 @@ func newTui(account *Account) Tui {
 		{Title: "Balance", Width: 15},
 	}
 
-
-	t := table.New(
-		table.WithFocused(true),
-		table.WithColumns(columns),
-	)
-
-	t.KeyMap.HalfPageUp = key.NewBinding(key.WithDisabled())
-	t.KeyMap.HalfPageDown = key.NewBinding(key.WithDisabled())
-
-	s := table.DefaultStyles()
-	s.Header = s.Header.
+	style := table.DefaultStyles()
+	style.Header = style.Header.
 		BorderStyle(lipgloss.NormalBorder()).
 		BorderForeground(lipgloss.Color("240")).
 		BorderBottom(true).
 		Bold(false)
 
-	s.Selected = s.Selected.
+	style.Selected = style.Selected.
 		Foreground(lipgloss.Color("229")).
-		Background(lipgloss.Color("57")).
+		Background(lipgloss.Color("27")).
 		Bold(false)
 
-	t.SetStyles(s)
+	t := table.New(
+		table.WithFocused(true),
+		table.WithColumns(columns),
+		table.WithStyles(style),
+	)
+
+	t.KeyMap.HalfPageUp = key.NewBinding(key.WithDisabled())
+	t.KeyMap.HalfPageDown = key.NewBinding(key.WithDisabled())
 
 	tui := Tui{
 		table:   t,
