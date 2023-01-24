@@ -25,11 +25,11 @@ type Event struct {
 func (e *Event) nextOccurrence(from time.Time) time.Time {
 	switch e.Frequency {
 	case Daily:
-		return from.Add(time.Hour * 24)
+		return from.AddDate(0, 0, 1)
 	case Weekly:
-		return from.Add(time.Hour * 24 * 7)
+		return from.AddDate(0, 0, 7)
 	case Biweekly:
-		return from.Add(time.Hour * 24 * 7 * 2)
+		return from.AddDate(0, 0, 14)
 	case Monthly:
 		return from.AddDate(0, 1, 0)
 	case Yearly:
