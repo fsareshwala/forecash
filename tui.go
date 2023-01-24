@@ -86,7 +86,7 @@ func newTui(account *Account) Tui {
 
 	t := table.New(
 		table.WithFocused(true),
-		table.WithHeight(height/4*3),
+		table.WithHeight(height*3/4),
 		table.WithWidth(width),
 		table.WithColumns(columns),
 	)
