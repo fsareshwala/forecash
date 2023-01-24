@@ -79,15 +79,9 @@ func newTui(account *Account) Tui {
 		{Title: "Balance", Width: 15},
 	}
 
-	width, height, err := term.GetSize(int(os.Stdout.Fd()))
-	if err != nil {
-		log.Fatal(err)
-	}
 
 	t := table.New(
 		table.WithFocused(true),
-		table.WithHeight(height*3/4),
-		table.WithWidth(width),
 		table.WithColumns(columns),
 	)
 
@@ -113,7 +107,18 @@ func newTui(account *Account) Tui {
 		account: account,
 	}
 
+	_, term_height, err := term.GetSize(int(os.Stdout.Fd()))
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	tui.regenerateRows()
+	height := len(tui.transactions)
+	if height > term_height {
+		height = term_height
+	}
+
+	tui.table.SetHeight(height)
 	return tui
 }
 
