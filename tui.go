@@ -62,7 +62,7 @@ func (t Tui) View() string {
 	formatted_balance := ac.FormatMoney(t.account.Balance)
 
 	style := lipgloss.NewStyle().
-		BorderStyle(lipgloss.NormalBorder()).
+		BorderStyle(lipgloss.HiddenBorder()).
 		BorderForeground(lipgloss.Color("240"))
 	table := style.Render(t.table.View())
 
