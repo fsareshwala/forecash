@@ -17,7 +17,7 @@ func main() {
 	config_path := flag.String("config", default_config_path, "account configuration file")
 	flag.Parse()
 
-	account := newAccount(*config_path)
+	account := newAccount(config_path)
 	tui := newTui(&account)
 	tui.run()
 }

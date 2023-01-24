@@ -40,8 +40,8 @@ type Account struct {
 	Events  []Event
 }
 
-func newAccount(path string) Account {
-	account_str, err := os.ReadFile(path)
+func newAccount(path *string) Account {
+	account_str, err := os.ReadFile(*path)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -51,7 +51,7 @@ func newAccount(path string) Account {
 		log.Fatal(err)
 	}
 
-	account.config_path = path
+	account.config_path = *path
 	return account
 }
 
