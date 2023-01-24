@@ -118,7 +118,7 @@ func newTui(account *Account) Tui {
 }
 
 func (t *Tui) regenerateRows() {
-	until := time.Now().AddDate(0, 5, 0)
+	until := time.Now().AddDate(0, 4, 0)
 	t.transactions = t.account.predict(until)
 
 	ac := accounting.Accounting{Symbol: "$", Precision: 2}
