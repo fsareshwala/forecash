@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"sort"
+	"strings"
 	"time"
 )
 
@@ -62,7 +63,7 @@ func (a *Account) deleteEvent(i int) {
 }
 
 func (a *Account) save() {
-	result, err := json.MarshalIndent(a, "", "    ")
+	result, err := json.MarshalIndent(a, "", strings.Repeat(" ", 4))
 	if err != nil {
 		log.Fatal(err)
 	}
