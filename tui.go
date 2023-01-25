@@ -139,12 +139,17 @@ func (t *Tui) regenerateRows() {
 		}
 
 		balance += t.event.Amount
+		balance_str := ac.FormatMoney(balance)
+		if balance < 0 {
+			balance_str = fmt.Sprintf(("\u001b[31m%s"), balance_str)
+		}
+
 		rows = append(rows, table.Row{
 			t.date.Format("January 2, 2006"),
 			t.event.Description,
 			income,
 			expense,
-			ac.FormatMoney(balance),
+			balance_str,
 		})
 	}
 
