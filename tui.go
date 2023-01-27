@@ -25,8 +25,6 @@ type KeyMap struct {
 
 	LineUp     key.Binding
 	LineDown   key.Binding
-	PageUp     key.Binding
-	PageDown   key.Binding
 	GotoTop    key.Binding
 	GotoBottom key.Binding
 
@@ -43,7 +41,7 @@ func (k KeyMap) ShortHelp() []key.Binding {
 
 func (k KeyMap) FullHelp() [][]key.Binding {
 	return [][]key.Binding{
-		{k.LineUp, k.LineDown, k.PageUp, k.PageDown, k.GotoTop, k.GotoBottom},
+		{k.LineUp, k.LineDown, k.GotoTop, k.GotoBottom},
 		{k.DatePrevious, k.DateNext, k.SetToday, k.Done, k.Delete},
 		{k.Reload, k.Save, k.Quit},
 	}
@@ -147,6 +145,8 @@ func newTui(account *Account) Tui {
 		table.WithStyles(style),
 	)
 
+	t.KeyMap.PageUp = key.NewBinding(key.WithDisabled())
+	t.KeyMap.PageDown = key.NewBinding(key.WithDisabled())
 	t.KeyMap.HalfPageUp = key.NewBinding(key.WithDisabled())
 	t.KeyMap.HalfPageDown = key.NewBinding(key.WithDisabled())
 
@@ -174,8 +174,6 @@ func newTui(account *Account) Tui {
 
 		LineUp:     t.KeyMap.LineUp,
 		LineDown:   t.KeyMap.LineDown,
-		PageUp:     t.KeyMap.PageUp,
-		PageDown:   t.KeyMap.LineDown,
 		GotoTop:    t.KeyMap.GotoTop,
 		GotoBottom: t.KeyMap.GotoBottom,
 
