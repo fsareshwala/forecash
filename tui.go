@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/table"
 	tea "github.com/charmbracelet/bubbletea"
@@ -15,8 +16,76 @@ import (
 	"golang.org/x/term"
 )
 
+type KeyMap struct {
+	DatePrevious key.Binding
+	DateNext     key.Binding
+	Delete       key.Binding
+	Done         key.Binding
+	SetToday     key.Binding
+
+	Help key.Binding
+
+	Reload key.Binding
+	Save   key.Binding
+	Quit   key.Binding
+}
+
+func (k KeyMap) ShortHelp() []key.Binding {
+	return []key.Binding{k.Help, k.Quit}
+}
+
+func (k KeyMap) FullHelp() [][]key.Binding {
+	return [][]key.Binding{
+		{k.DatePrevious, k.DateNext, k.SetToday, k.Done, k.Delete},
+		{k.Reload, k.Save, k.Quit},
+	}
+}
+
+var keyMap = KeyMap{
+	DatePrevious: key.NewBinding(
+		key.WithKeys("h"),
+		key.WithHelp("h", "date previous"),
+	),
+	DateNext: key.NewBinding(
+		key.WithKeys("l"),
+		key.WithHelp("l", "date next"),
+	),
+	Delete: key.NewBinding(
+		key.WithKeys("d"),
+		key.WithHelp("d", "delete"),
+	),
+	Done: key.NewBinding(
+		key.WithKeys("x"),
+		key.WithHelp("x", "done"),
+	),
+	SetToday: key.NewBinding(
+		key.WithKeys("t"),
+		key.WithHelp("t", "set to today"),
+	),
+
+	Help: key.NewBinding(
+		key.WithKeys("?"),
+		key.WithHelp("?", "toggle help"),
+	),
+
+	Reload: key.NewBinding(
+		key.WithKeys("r"),
+		key.WithHelp("r", "reload"),
+	),
+	Save: key.NewBinding(
+		key.WithKeys("w"),
+		key.WithHelp("w", "save"),
+	),
+	Quit: key.NewBinding(
+		key.WithKeys("q"),
+		key.WithHelp("q", "quit"),
+	),
+}
+
 type Tui struct {
 	table table.Model
+	keys  KeyMap
+	help  help.Model
 
 	account      *Account
 	transactions []Transaction
@@ -31,23 +100,30 @@ func (t Tui) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	tx := t.transactions[t.table.Cursor()]
 	switch msg := msg.(type) {
+	case tea.WindowSizeMsg:
+		t.help.Width = msg.Width
+
 	case tea.KeyMsg:
-		switch msg.String() {
-		case "h":
+		switch {
+		case key.Matches(msg, t.keys.DatePrevious):
 			t.account.txDatePrevious(&tx)
-		case "l":
+		case key.Matches(msg, t.keys.DateNext):
 			t.account.txDateNext(&tx)
-		case "d":
+		case key.Matches(msg, t.keys.Delete):
 			t.account.txComplete(&tx, false)
-		case "x":
+		case key.Matches(msg, t.keys.Done):
 			t.account.txComplete(&tx, true)
-		case "t":
+		case key.Matches(msg, t.keys.SetToday):
 			t.account.txSetToToday(&tx)
-		case "r":
+
+		case key.Matches(msg, t.keys.Help):
+			t.help.ShowAll = !t.help.ShowAll
+
+		case key.Matches(msg, t.keys.Reload):
 			t.account.reload()
-		case "w":
+		case key.Matches(msg, t.keys.Save):
 			t.account.save()
-		case "q":
+		case key.Matches(msg, t.keys.Quit):
 			return t, tea.Quit
 		}
 	}
@@ -67,7 +143,8 @@ func (t Tui) View() string {
 	table := style.Render(t.table.View())
 
 	prefix := strings.Repeat(" ", 83)
-	return fmt.Sprintf("%sCurrent balance: %s\n%s\n", prefix, formatted_balance, table)
+	helpView := t.help.View(t.keys)
+	return fmt.Sprintf("%sCurrent balance: %s\n%s\n%s\n", prefix, formatted_balance, table, helpView)
 }
 
 func newTui(account *Account) Tui {
@@ -101,8 +178,11 @@ func newTui(account *Account) Tui {
 	t.KeyMap.HalfPageDown = key.NewBinding(key.WithDisabled())
 
 	tui := Tui{
-		table:   t,
-		account: account,
+		table:        t,
+		keys:         keyMap,
+		help:         help.New(),
+		account:      account,
+		transactions: nil,
 	}
 
 	_, term_height, err := term.GetSize(int(os.Stdout.Fd()))
