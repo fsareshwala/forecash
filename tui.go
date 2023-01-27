@@ -23,6 +23,13 @@ type KeyMap struct {
 	Done         key.Binding
 	SetToday     key.Binding
 
+	LineUp     key.Binding
+	LineDown   key.Binding
+	PageUp     key.Binding
+	PageDown   key.Binding
+	GotoTop    key.Binding
+	GotoBottom key.Binding
+
 	Help key.Binding
 
 	Reload key.Binding
@@ -36,56 +43,16 @@ func (k KeyMap) ShortHelp() []key.Binding {
 
 func (k KeyMap) FullHelp() [][]key.Binding {
 	return [][]key.Binding{
+		{k.LineUp, k.LineDown, k.PageUp, k.PageDown, k.GotoTop, k.GotoBottom},
 		{k.DatePrevious, k.DateNext, k.SetToday, k.Done, k.Delete},
 		{k.Reload, k.Save, k.Quit},
 	}
 }
 
-var keyMap = KeyMap{
-	DatePrevious: key.NewBinding(
-		key.WithKeys("h"),
-		key.WithHelp("h", "date previous"),
-	),
-	DateNext: key.NewBinding(
-		key.WithKeys("l"),
-		key.WithHelp("l", "date next"),
-	),
-	Delete: key.NewBinding(
-		key.WithKeys("d"),
-		key.WithHelp("d", "delete"),
-	),
-	Done: key.NewBinding(
-		key.WithKeys("x"),
-		key.WithHelp("x", "done"),
-	),
-	SetToday: key.NewBinding(
-		key.WithKeys("t"),
-		key.WithHelp("t", "set to today"),
-	),
-
-	Help: key.NewBinding(
-		key.WithKeys("?"),
-		key.WithHelp("?", "toggle help"),
-	),
-
-	Reload: key.NewBinding(
-		key.WithKeys("r"),
-		key.WithHelp("r", "reload"),
-	),
-	Save: key.NewBinding(
-		key.WithKeys("w"),
-		key.WithHelp("w", "save"),
-	),
-	Quit: key.NewBinding(
-		key.WithKeys("q"),
-		key.WithHelp("q", "quit"),
-	),
-}
-
 type Tui struct {
-	table table.Model
-	keys  KeyMap
-	help  help.Model
+	keys    KeyMap
+	help    help.Model
+	table   table.Model
 
 	account      *Account
 	transactions []Transaction
@@ -177,10 +144,58 @@ func newTui(account *Account) Tui {
 	t.KeyMap.HalfPageUp = key.NewBinding(key.WithDisabled())
 	t.KeyMap.HalfPageDown = key.NewBinding(key.WithDisabled())
 
+	keyMap := KeyMap{
+		DatePrevious: key.NewBinding(
+			key.WithKeys("h"),
+			key.WithHelp("h", "date to previous day"),
+		),
+		DateNext: key.NewBinding(
+			key.WithKeys("l"),
+			key.WithHelp("l", "date to next day"),
+		),
+		Delete: key.NewBinding(
+			key.WithKeys("d"),
+			key.WithHelp("d", "delete"),
+		),
+		Done: key.NewBinding(
+			key.WithKeys("x"),
+			key.WithHelp("x", "done"),
+		),
+		SetToday: key.NewBinding(
+			key.WithKeys("t"),
+			key.WithHelp("t", "set to today"),
+		),
+
+		LineUp:     t.KeyMap.LineUp,
+		LineDown:   t.KeyMap.LineDown,
+		PageUp:     t.KeyMap.PageUp,
+		PageDown:   t.KeyMap.LineDown,
+		GotoTop:    t.KeyMap.GotoTop,
+		GotoBottom: t.KeyMap.GotoBottom,
+
+		Help: key.NewBinding(
+			key.WithKeys("?"),
+			key.WithHelp("?", "toggle help"),
+		),
+
+		Reload: key.NewBinding(
+			key.WithKeys("r"),
+			key.WithHelp("r", "reload"),
+		),
+		Save: key.NewBinding(
+			key.WithKeys("w"),
+			key.WithHelp("w", "save"),
+		),
+		Quit: key.NewBinding(
+			key.WithKeys("q"),
+			key.WithHelp("q", "quit"),
+		),
+	}
+
 	tui := Tui{
-		table:        t,
 		keys:         keyMap,
 		help:         help.New(),
+		table:        t,
 		account:      account,
 		transactions: nil,
 	}
