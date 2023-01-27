@@ -102,16 +102,22 @@ func (t Tui) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (t Tui) View() string {
 	ac := accounting.Accounting{Symbol: "$", Precision: 2}
-	formatted_balance := ac.FormatMoney(t.account.Balance)
 
 	style := lipgloss.NewStyle().
 		BorderStyle(lipgloss.HiddenBorder()).
 		BorderForeground(lipgloss.Color("240"))
-	table := style.Render(t.table.View())
 
-	prefix := strings.Repeat(" ", 83)
-	helpView := t.help.View(t.keys)
-	return fmt.Sprintf("%sCurrent balance: %s\n%s\n%s\n", prefix, formatted_balance, table, helpView)
+	var b strings.Builder
+	b.WriteString(strings.Repeat(" ", 83))
+	b.WriteString("Current balance: ")
+	b.WriteString(ac.FormatMoney(t.account.Balance))
+	b.WriteString("\n")
+	b.WriteString(style.Render(t.table.View()))
+	b.WriteString("\n")
+	b.WriteString(t.help.View(t.keys))
+	b.WriteString("\n")
+
+	return b.String()
 }
 
 func newTui(account *Account) Tui {
