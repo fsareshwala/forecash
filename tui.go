@@ -48,9 +48,9 @@ func (k KeyMap) FullHelp() [][]key.Binding {
 }
 
 type Tui struct {
-	keys    KeyMap
-	help    help.Model
-	table   table.Model
+	keys  KeyMap
+	help  help.Model
+	table table.Model
 
 	account      *Account
 	transactions []Transaction
@@ -101,17 +101,13 @@ func (t Tui) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (t Tui) View() string {
 	ac := accounting.Accounting{Symbol: "$", Precision: 2}
 
-	style := lipgloss.NewStyle().
-		BorderStyle(lipgloss.HiddenBorder()).
-		BorderForeground(lipgloss.Color("240"))
-
 	var b strings.Builder
-	b.WriteString(strings.Repeat(" ", 83))
+	b.WriteString(strings.Repeat(" ", 82))
 	b.WriteString("Current balance: ")
 	b.WriteString(ac.FormatMoney(t.account.Balance))
-	b.WriteString("\n")
-	b.WriteString(style.Render(t.table.View()))
-	b.WriteString("\n")
+	b.WriteString("\n\n")
+	b.WriteString(t.table.View())
+	b.WriteString("\n\n")
 	b.WriteString(t.help.View(t.keys))
 	b.WriteString("\n")
 
