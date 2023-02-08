@@ -4,12 +4,14 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/table"
+	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/leekchan/accounting"
@@ -23,13 +25,16 @@ type KeyMap struct {
 	Done         key.Binding
 	SetToday     key.Binding
 
+	FocusTable  key.Binding
+	EditBalance key.Binding
+	Confirm     key.Binding
+
 	LineUp     key.Binding
 	LineDown   key.Binding
 	GotoTop    key.Binding
 	GotoBottom key.Binding
 
-	Help key.Binding
-
+	Help   key.Binding
 	Reload key.Binding
 	Save   key.Binding
 	Quit   key.Binding
@@ -43,14 +48,17 @@ func (k KeyMap) FullHelp() [][]key.Binding {
 	return [][]key.Binding{
 		{k.LineUp, k.LineDown, k.GotoTop, k.GotoBottom},
 		{k.DatePrevious, k.DateNext, k.SetToday, k.Done, k.Delete},
+		{k.EditBalance, k.Confirm, k.FocusTable},
 		{k.Reload, k.Save, k.Quit},
 	}
 }
 
 type Tui struct {
-	keys  KeyMap
-	help  help.Model
-	table table.Model
+	keys KeyMap
+
+	help    help.Model
+	table   table.Model
+	balance textinput.Model
 
 	account      *Account
 	transactions []Transaction
@@ -60,14 +68,10 @@ func (t Tui) Init() tea.Cmd {
 	return nil
 }
 
-func (t Tui) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	var cmd tea.Cmd
-
+func (t *Tui) handleTableInput(msg tea.Msg) (table.Model, tea.Cmd) {
 	tx := t.transactions[t.table.Cursor()]
-	switch msg := msg.(type) {
-	case tea.WindowSizeMsg:
-		t.help.Width = msg.Width
 
+	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch {
 		case key.Matches(msg, t.keys.DatePrevious):
@@ -81,30 +85,80 @@ func (t Tui) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case key.Matches(msg, t.keys.SetToday):
 			t.account.txSetToToday(&tx)
 
+		case key.Matches(msg, t.keys.EditBalance):
+			t.table.Blur()
+			t.balance.SetValue(fmt.Sprintf("%.02f", t.account.Balance))
+			t.balance.CursorEnd()
+			t.balance.Focus()
+
 		case key.Matches(msg, t.keys.Help):
 			t.help.ShowAll = !t.help.ShowAll
-
 		case key.Matches(msg, t.keys.Reload):
 			t.account.reload()
 		case key.Matches(msg, t.keys.Save):
 			t.account.save()
 		case key.Matches(msg, t.keys.Quit):
-			return t, tea.Quit
+			return t.table, tea.Quit
+		}
+	}
+
+	var cmd tea.Cmd
+	t.table, cmd = t.table.Update(msg)
+	return t.table, cmd
+}
+
+func (t *Tui) handleBalanceInput(msg tea.Msg) (textinput.Model, tea.Cmd) {
+	switch msg := msg.(type) {
+	case tea.KeyMsg:
+		switch {
+		case key.Matches(msg, t.keys.FocusTable):
+			t.balance.Blur()
+			t.table.Focus()
+		case key.Matches(msg, t.keys.Confirm):
+			if result, err := strconv.ParseFloat(t.balance.Value(), 32); err == nil {
+				t.account.Balance = float32(result)
+			}
+
+			t.balance.Blur()
+			t.table.Focus()
+		}
+	}
+
+	var cmd tea.Cmd
+	t.balance, cmd = t.balance.Update(msg)
+	return t.balance, cmd
+}
+
+func (t Tui) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	var cmd tea.Cmd
+
+	switch msg := msg.(type) {
+	case tea.WindowSizeMsg:
+		t.help.Width = msg.Width
+		t.table.SetWidth(msg.Width)
+
+	case tea.KeyMsg:
+		if t.table.Focused() {
+			t.table, cmd = t.handleTableInput(msg)
+		} else if t.balance.Focused() {
+			t.balance, cmd = t.handleBalanceInput(msg)
 		}
 	}
 
 	t.regenerateRows()
-	t.table, cmd = t.table.Update(msg)
 	return t, cmd
 }
 
 func (t Tui) View() string {
-	ac := accounting.Accounting{Symbol: "$", Precision: 2}
+	if !t.balance.Focused() {
+		ac := accounting.Accounting{Symbol: "$", Precision: 2}
+		t.balance.SetValue(ac.FormatMoney(t.account.Balance))
+		t.balance.Blur()
+	}
 
 	var b strings.Builder
 	b.WriteString(strings.Repeat(" ", 82))
-	b.WriteString("Current balance: ")
-	b.WriteString(ac.FormatMoney(t.account.Balance))
+	b.WriteString(t.balance.View())
 	b.WriteString("\n\n")
 	b.WriteString(t.table.View())
 	b.WriteString("\n\n")
@@ -173,11 +227,23 @@ func newTui(account *Account) Tui {
 		GotoTop:    t.KeyMap.GotoTop,
 		GotoBottom: t.KeyMap.GotoBottom,
 
+		FocusTable: key.NewBinding(
+			key.WithKeys("esc"),
+			key.WithHelp("esc", "focus table"),
+		),
+		EditBalance: key.NewBinding(
+			key.WithKeys("b"),
+			key.WithHelp("b", "edit balance"),
+		),
+		Confirm: key.NewBinding(
+			key.WithKeys("enter"),
+			key.WithHelp("enter", "confirm"),
+		),
+
 		Help: key.NewBinding(
 			key.WithKeys("?"),
 			key.WithHelp("?", "toggle help"),
 		),
-
 		Reload: key.NewBinding(
 			key.WithKeys("r"),
 			key.WithHelp("r", "reload"),
@@ -192,10 +258,14 @@ func newTui(account *Account) Tui {
 		),
 	}
 
+	b := textinput.New()
+	b.Prompt = "Current balance: "
+
 	tui := Tui{
 		keys:         keyMap,
 		help:         help.New(),
 		table:        t,
+		balance:      b,
 		account:      account,
 		transactions: nil,
 	}
