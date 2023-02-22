@@ -180,9 +180,7 @@ func newTui(account *Account) Tui {
 	style := table.DefaultStyles()
 	style.Header = style.Header.
 		BorderStyle(lipgloss.NormalBorder()).
-		BorderForeground(lipgloss.Color("240")).
-		BorderBottom(true).
-		Bold(false)
+		BorderBottom(true)
 
 	style.Selected = style.Selected.
 		Foreground(lipgloss.Color("229")).
