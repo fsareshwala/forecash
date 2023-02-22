@@ -304,7 +304,7 @@ func (t *Tui) regenerateRows() {
 		balance += t.event.Amount
 		balance_str := ac.FormatMoney(balance)
 		if balance < 0 {
-			balance_str = fmt.Sprintf(("\u001b[31m%s"), balance_str)
+			balance_str = fmt.Sprintf(("\x1b[31m%s\x1b[0m"), balance_str)
 		}
 
 		rows = append(rows, table.Row{
