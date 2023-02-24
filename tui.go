@@ -62,6 +62,7 @@ type Tui struct {
 
 	account      *Account
 	transactions []Transaction
+	currency     accounting.Accounting
 }
 
 func (t Tui) Init() tea.Cmd {
@@ -151,8 +152,7 @@ func (t Tui) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (t Tui) View() string {
 	if !t.balance.Focused() {
-		ac := accounting.Accounting{Symbol: "$", Precision: 2}
-		t.balance.SetValue(ac.FormatMoney(t.account.Balance))
+		t.balance.SetValue(t.currency.FormatMoney(t.account.Balance))
 		t.balance.Blur()
 	}
 
@@ -261,12 +261,15 @@ func newTui(account *Account) Tui {
 	b.Prompt = "Current balance: "
 
 	tui := Tui{
-		keys:         keyMap,
-		help:         help.New(),
-		table:        t,
-		balance:      b,
+		keys: keyMap,
+
+		help:    help.New(),
+		table:   t,
+		balance: b,
+
 		account:      account,
 		transactions: nil,
+		currency:     accounting.Accounting{Symbol: "$", Precision: 2},
 	}
 
 	_, term_height, err := term.GetSize(int(os.Stdout.Fd()))
@@ -288,29 +291,28 @@ func (t *Tui) regenerateRows() {
 	until := time.Now().AddDate(0, 4, 0)
 	t.transactions = t.account.predict(until)
 
-	ac := accounting.Accounting{Symbol: "$", Precision: 2}
 	balance := t.account.Balance
 
 	rows := make([]table.Row, 0, len(t.transactions))
-	for _, t := range t.transactions {
+	for _, transaction := range t.transactions {
 		var income string
 		var expense string
 
-		if t.event.Amount > 0 {
-			income = ac.FormatMoney(t.event.Amount)
+		if transaction.event.Amount > 0 {
+			income = t.currency.FormatMoney(transaction.event.Amount)
 		} else {
-			expense = ac.FormatMoney(t.event.Amount * -1)
+			expense = t.currency.FormatMoney(transaction.event.Amount * -1)
 		}
 
-		balance += t.event.Amount
-		balance_str := ac.FormatMoney(balance)
+		balance += transaction.event.Amount
+		balance_str := t.currency.FormatMoney(balance)
 		if balance < 0 {
 			balance_str = fmt.Sprintf(("\x1b[31m%s\x1b[0m"), balance_str)
 		}
 
 		rows = append(rows, table.Row{
-			t.date.Format("January 2, 2006"),
-			t.event.Description,
+			transaction.date.Format("January 2, 2006"),
+			transaction.event.Description,
 			income,
 			expense,
 			balance_str,
