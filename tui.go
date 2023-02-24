@@ -179,6 +179,7 @@ func newTui(account *Account) Tui {
 
 	style := table.DefaultStyles()
 	style.Header = style.Header.
+		Bold(false).
 		BorderStyle(lipgloss.NormalBorder()).
 		BorderBottom(true)
 
