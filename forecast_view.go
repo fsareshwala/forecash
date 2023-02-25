@@ -97,6 +97,11 @@ type ForecastView struct {
 	transactions []Transaction
 }
 
+const (
+	selectedForeground = lipgloss.Color("229")
+	selectedBackground = lipgloss.Color("27")
+)
+
 func NewForecastView(account *Account) ForecastView {
 	columns := []table.Column{
 		{Title: "Date", Width: 20},
@@ -113,8 +118,8 @@ func NewForecastView(account *Account) ForecastView {
 		BorderBottom(true)
 
 	style.Selected = style.Selected.
-		Foreground(lipgloss.Color("229")).
-		Background(lipgloss.Color("27")).
+		Foreground(selectedForeground).
+		Background(selectedBackground).
 		Bold(false)
 
 	t := table.New(
