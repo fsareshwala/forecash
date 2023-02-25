@@ -7,6 +7,8 @@ import (
 	"sort"
 	"strings"
 	"time"
+
+	"github.com/leekchan/accounting"
 )
 
 type Transaction struct {
@@ -36,6 +38,7 @@ func (t byDate) Less(i int, j int) bool {
 
 type Account struct {
 	config_path string
+	currency    accounting.Accounting
 
 	Balance float32
 	Events  []Event
@@ -53,6 +56,7 @@ func newAccount(path *string) Account {
 	}
 
 	account.config_path = *path
+	account.currency = accounting.Accounting{Symbol: "$", Precision: 2}
 	return account
 }
 
