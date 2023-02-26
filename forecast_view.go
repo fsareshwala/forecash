@@ -23,9 +23,12 @@ type ForecastViewKeyMap struct {
 	Done         key.Binding
 	SetToday     key.Binding
 	Reload       key.Binding
+	EditEvent    key.Binding
+	AddEvent     key.Binding
 
 	FocusTable  key.Binding
 	EditBalance key.Binding
+	Save        key.Binding
 
 	LineUp     key.Binding
 	LineDown   key.Binding
@@ -59,6 +62,14 @@ func NewForecastViewKeyMap() ForecastViewKeyMap {
 			key.WithKeys("r"),
 			key.WithHelp("r", "reload"),
 		),
+		EditEvent: key.NewBinding(
+			key.WithKeys("e"),
+			key.WithHelp("e", "edit event"),
+		),
+		AddEvent: key.NewBinding(
+			key.WithKeys("a"),
+			key.WithHelp("a", "add event"),
+		),
 
 		FocusTable: key.NewBinding(
 			key.WithKeys("esc"),
@@ -67,6 +78,10 @@ func NewForecastViewKeyMap() ForecastViewKeyMap {
 		EditBalance: key.NewBinding(
 			key.WithKeys("b"),
 			key.WithHelp("b", "edit balance"),
+		),
+		Save: key.NewBinding(
+			key.WithKeys("w"),
+			key.WithHelp("w", "save"),
 		),
 
 		LineUp: key.NewBinding(
@@ -198,7 +213,7 @@ func (f *ForecastView) regenerateRows() {
 func (f *ForecastView) View() string {
 	if !f.balance.Focused() {
 		f.balance.SetValue(f.account.currency.FormatMoney(f.account.Balance))
-		f.balance.Blur()
+		f.balance.Blur() // setting value apparently focuses the textinput
 	}
 
 	var b strings.Builder
@@ -220,9 +235,10 @@ func (f *ForecastView) Update(msg tea.Msg) tea.Cmd {
 		} else if f.balance.Focused() {
 			cmd = f.handleBalanceInput(msg)
 		}
+
+		f.regenerateRows()
 	}
 
-	f.regenerateRows()
 	return cmd
 }
 
@@ -245,6 +261,8 @@ func (f *ForecastView) handleTableInput(msg tea.Msg) tea.Cmd {
 		case key.Matches(msg, f.keymap.Reload):
 			f.account.reload()
 
+		case key.Matches(msg, f.keymap.Save):
+			f.account.save()
 		case key.Matches(msg, f.keymap.EditBalance):
 			f.table.Blur()
 			f.balance.SetValue(fmt.Sprintf("%.02f", f.account.Balance))
@@ -280,4 +298,8 @@ func (f *ForecastView) handleBalanceInput(msg tea.Msg) tea.Cmd {
 	var cmd tea.Cmd
 	f.balance, cmd = f.balance.Update(msg)
 	return cmd
+}
+
+func (f *ForecastView) getSelectedTransaction() *Transaction {
+	return &f.transactions[f.table.Cursor()]
 }

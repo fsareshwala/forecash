@@ -60,6 +60,10 @@ func newAccount(path *string) Account {
 	return account
 }
 
+func (a *Account) addEvent(event *Event) {
+	a.Events = append(a.Events, *event)
+}
+
 func (a *Account) deleteEvent(i int) {
 	last := len(a.Events) - 1
 	a.Events[i] = a.Events[last]

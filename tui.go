@@ -13,7 +13,6 @@ import (
 type MainKeyMap struct {
 	Confirm key.Binding
 	Help    key.Binding
-	Save    key.Binding
 	Quit    key.Binding
 }
 
@@ -26,10 +25,6 @@ func NewMainKeyMap() MainKeyMap {
 		Help: key.NewBinding(
 			key.WithKeys("?"),
 			key.WithHelp("?", "toggle help"),
-		),
-		Save: key.NewBinding(
-			key.WithKeys("w"),
-			key.WithHelp("w", "save"),
 		),
 		Quit: key.NewBinding(
 			key.WithKeys("q"),
@@ -46,18 +41,27 @@ func (k MainKeyMap) FullHelp() [][]key.Binding {
 	f := NewForecastViewKeyMap()
 	return [][]key.Binding{
 		{f.LineUp, f.LineDown, f.GotoTop, f.GotoBottom},
-		{f.DatePrevious, f.DateNext, f.SetToday, f.Done, f.Delete},
+		{f.DatePrevious, f.DateNext, f.SetToday, f.Done, f.Delete, f.EditEvent, f.AddEvent},
 		{f.EditBalance, k.Confirm, f.FocusTable},
-		{f.Reload, k.Save, k.Quit},
+		{f.Reload, f.Save, k.Quit},
 	}
 }
 
-type Tui struct {
-	keymap MainKeyMap
-	help   help.Model
+type State int
 
-	account      *Account
+const (
+	stateForecastView State = iota
+	stateEventView
+)
+
+type Tui struct {
+	keymap       MainKeyMap
+	help         help.Model
 	forecastView ForecastView
+	eventView    EventView
+
+	state   State
+	account *Account
 }
 
 func (t Tui) Init() tea.Cmd {
@@ -65,40 +69,91 @@ func (t Tui) Init() tea.Cmd {
 }
 
 func (t Tui) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	f := NewForecastViewKeyMap()
+
 	switch msg := msg.(type) {
+	case tea.WindowSizeMsg:
+		t.help.Width = msg.Width
 	case tea.KeyMsg:
 		switch {
 		case key.Matches(msg, t.keymap.Help):
 			t.help.ShowAll = !t.help.ShowAll
 			return t, nil
-		case key.Matches(msg, t.keymap.Save):
-			t.account.save()
-			return t, nil
 		case key.Matches(msg, t.keymap.Quit):
 			return t, tea.Quit
+
+		// Although these keypresses are enabled only for specific views, we check here because there is
+		// no way for a subview to inform the parent view to switch to another subview (e.g. going from
+		// ForecastView to EventView).
+		//
+		// We could pass the Tui instance to the subviews as well but it (a) creates a bidirectional
+		// pointer relationship and (b) doesn't work due to the Model interface passing by value and
+		// creating a new copy of Tui each time Update or View is called.
+		//
+		// ForecastView keypresses
+		case t.state == stateForecastView && key.Matches(msg, f.AddEvent):
+			t.eventView.unsetEvent()
+			t.state = stateEventView
+		case t.state == stateForecastView && key.Matches(msg, f.EditEvent):
+			t.eventView.setEvent(t.forecastView.getSelectedTransaction().event)
+			t.state = stateEventView
+
+		// EventView keypresses
+		case t.state == stateEventView && key.Matches(msg, f.FocusTable):
+			t.eventView.unsetEvent()
+			t.state = stateForecastView
+		case t.state == stateEventView && key.Matches(msg, t.keymap.Confirm):
+			// we must call getEvent in both add or edit mode: it pulls data from textinputs
+			event := t.eventView.getEvent()
+			if !t.eventView.hasEvent() {
+				t.account.addEvent(event)
+			}
+
+			t.eventView.unsetEvent()
+			t.state = stateForecastView
 		}
 	}
 
-	cmd := t.forecastView.Update(msg)
+	var cmd tea.Cmd
+	switch t.state {
+	case stateForecastView:
+		cmd = t.forecastView.Update(msg)
+	case stateEventView:
+		cmd = t.eventView.Update(msg)
+	}
+
 	return t, cmd
 }
 
 func (t Tui) View() string {
 	var b strings.Builder
-	b.WriteString(t.forecastView.View())
+
+	switch t.state {
+	case stateForecastView:
+		b.WriteString(t.forecastView.View())
+	case stateEventView:
+		b.WriteString(t.eventView.View())
+	}
+
 	b.WriteString(t.help.View(t.keymap))
 	b.WriteString("\n")
 	return b.String()
 }
 
 func newTui(account *Account) Tui {
-	return Tui{
-		keymap: NewMainKeyMap(),
-		help:   help.New(),
-
-		account:      account,
+	t := Tui{
+		keymap:       NewMainKeyMap(),
+		help:         help.New(),
 		forecastView: NewForecastView(account),
+		eventView:    NewEventView(),
+
+		state:   stateForecastView,
+		account: account,
 	}
+
+	// bidirectional relationship between main view and subviews, necessary so that subviews can
+	// instruct main view to switch to another subview
+	return t
 }
 
 func (t *Tui) run() {
