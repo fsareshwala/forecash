@@ -124,8 +124,8 @@ func (a *Account) txComplete(tx *Transaction, update_balance bool) {
 		a.Balance += tx.event.Amount
 	}
 
-	i := a.findEventIndex(tx)
 	if !tx.repeats() {
+		i := a.findEventIndex(tx)
 		a.deleteEvent(i)
 		return
 	}
