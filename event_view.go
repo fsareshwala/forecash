@@ -226,16 +226,10 @@ func (e *EventView) Update(msg tea.Msg) tea.Cmd {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.Type {
-		case tea.KeyEnter:
-			if e.focused == len(e.inputs)-1 {
-				return tea.Quit
-			}
-
+		case tea.KeyTab:
 			e.nextInput()
 		case tea.KeyShiftTab:
 			e.prevInput()
-		case tea.KeyTab:
-			e.nextInput()
 		}
 
 		for i := range e.inputs {
