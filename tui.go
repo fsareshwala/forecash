@@ -79,8 +79,6 @@ func (t Tui) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case key.Matches(msg, t.keymap.Help):
 			t.help.ShowAll = !t.help.ShowAll
 			return t, nil
-		case key.Matches(msg, t.keymap.Quit):
-			return t, tea.Quit
 
 		// Although these keypresses are enabled only for specific views, we check here because there is
 		// no way for a subview to inform the parent view to switch to another subview (e.g. going from
@@ -97,6 +95,8 @@ func (t Tui) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case t.state == stateForecastView && key.Matches(msg, f.EditEvent):
 			t.eventView.setEvent(t.forecastView.getSelectedTransaction().event)
 			t.state = stateEventView
+		case t.state == stateForecastView && key.Matches(msg, t.keymap.Quit):
+			return t, tea.Quit
 
 		// EventView keypresses
 		case t.state == stateEventView && key.Matches(msg, f.FocusTable):
