@@ -35,8 +35,10 @@ func NewEventViewKeyMap() EventViewKeyMap {
 	}
 }
 
+type FocusedField int
+
 const (
-	month = iota
+	month FocusedField = iota
 	day
 	year
 	description
