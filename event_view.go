@@ -50,7 +50,7 @@ const (
 type EventView struct {
 	keymap  EventViewKeyMap
 	inputs  []textinput.Model
-	focused int
+	focused FocusedField
 
 	event *Event
 }
@@ -94,7 +94,7 @@ func NewEventView() EventView {
 	return EventView{
 		keymap:  NewEventViewKeyMap(),
 		inputs:  inputs,
-		focused: 0,
+		focused: description,
 	}
 }
 
@@ -249,13 +249,13 @@ func (e *EventView) Update(msg tea.Msg) tea.Cmd {
 }
 
 func (e *EventView) nextInput() {
-	e.focused = (e.focused + 1) % len(e.inputs)
+	e.focused = (e.focused + 1) % sentinel
 }
 
 func (e *EventView) prevInput() {
 	e.focused--
 
 	if e.focused < 0 {
-		e.focused = len(e.inputs) - 1
+		e.focused = sentinel - 1
 	}
 }
