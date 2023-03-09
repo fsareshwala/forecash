@@ -5,47 +5,9 @@ import (
 	"os"
 	"strings"
 
-	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
 )
-
-type MainKeyMap struct {
-	Confirm key.Binding
-	Help    key.Binding
-	Quit    key.Binding
-}
-
-func NewMainKeyMap() MainKeyMap {
-	return MainKeyMap{
-		Confirm: key.NewBinding(
-			key.WithKeys("enter"),
-			key.WithHelp("enter", "confirm"),
-		),
-		Help: key.NewBinding(
-			key.WithKeys("?"),
-			key.WithHelp("?", "toggle help"),
-		),
-		Quit: key.NewBinding(
-			key.WithKeys("q"),
-			key.WithHelp("q", "quit"),
-		),
-	}
-}
-
-func (k MainKeyMap) ShortHelp() []key.Binding {
-	return []key.Binding{k.Help, k.Quit}
-}
-
-func (k MainKeyMap) FullHelp() [][]key.Binding {
-	f := NewForecastViewKeyMap()
-	return [][]key.Binding{
-		{f.LineUp, f.LineDown, f.GotoTop, f.GotoBottom},
-		{f.DatePrevious, f.DateNext, f.SetToday, f.Done, f.Delete, f.EditEvent, f.AddEvent},
-		{f.EditBalance, k.Confirm, f.FocusTable},
-		{f.Reload, f.Save, k.Quit},
-	}
-}
 
 type State int
 
@@ -55,8 +17,6 @@ const (
 )
 
 type Tui struct {
-	keymap       MainKeyMap
-	help         help.Model
 	forecastView ForecastView
 	eventView    EventView
 
@@ -72,14 +32,8 @@ func (t Tui) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	f := NewForecastViewKeyMap()
 
 	switch msg := msg.(type) {
-	case tea.WindowSizeMsg:
-		t.help.Width = msg.Width
 	case tea.KeyMsg:
 		switch {
-		case key.Matches(msg, t.keymap.Help):
-			t.help.ShowAll = !t.help.ShowAll
-			return t, nil
-
 		// Although these keypresses are enabled only for specific views, we check here because there is
 		// no way for a subview to inform the parent view to switch to another subview (e.g. going from
 		// ForecastView to EventView).
@@ -95,14 +49,14 @@ func (t Tui) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case t.state == stateForecastView && key.Matches(msg, f.EditEvent):
 			t.eventView.setEvent(t.forecastView.getSelectedTransaction().event)
 			t.state = stateEventView
-		case t.state == stateForecastView && key.Matches(msg, t.keymap.Quit):
+		case t.state == stateForecastView && key.Matches(msg, f.Quit):
 			return t, tea.Quit
 
 		// EventView keypresses
 		case t.state == stateEventView && key.Matches(msg, f.FocusTable):
 			t.eventView.unsetEvent()
 			t.state = stateForecastView
-		case t.state == stateEventView && key.Matches(msg, t.keymap.Confirm):
+		case t.state == stateEventView && key.Matches(msg, f.Confirm):
 			// we must call getEvent in both add or edit mode: it pulls data from textinputs
 			event := t.eventView.getEvent()
 			if !t.eventView.hasEvent() {
@@ -135,15 +89,11 @@ func (t Tui) View() string {
 		b.WriteString(t.eventView.View())
 	}
 
-	b.WriteString(t.help.View(t.keymap))
-	b.WriteString("\n")
 	return b.String()
 }
 
 func newTui(account *Account) Tui {
 	t := Tui{
-		keymap:       NewMainKeyMap(),
-		help:         help.New(),
 		forecastView: NewForecastView(account),
 		eventView:    NewEventView(),
 

@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/table"
 	"github.com/charmbracelet/bubbles/textinput"
@@ -28,7 +29,10 @@ type ForecastViewKeyMap struct {
 
 	FocusTable  key.Binding
 	EditBalance key.Binding
+	Help        key.Binding
+	Confirm     key.Binding
 	Save        key.Binding
+	Quit        key.Binding
 
 	LineUp     key.Binding
 	LineDown   key.Binding
@@ -79,9 +83,21 @@ func NewForecastViewKeyMap() ForecastViewKeyMap {
 			key.WithKeys("b"),
 			key.WithHelp("b", "edit balance"),
 		),
+		Help: key.NewBinding(
+			key.WithKeys("?"),
+			key.WithHelp("?", "toggle help"),
+		),
+		Confirm: key.NewBinding(
+			key.WithKeys("enter"),
+			key.WithHelp("enter", "confirm"),
+		),
 		Save: key.NewBinding(
 			key.WithKeys("w"),
 			key.WithHelp("w", "save"),
+		),
+		Quit: key.NewBinding(
+			key.WithKeys("q"),
+			key.WithHelp("q", "quit"),
 		),
 
 		LineUp: key.NewBinding(
@@ -103,8 +119,23 @@ func NewForecastViewKeyMap() ForecastViewKeyMap {
 	}
 }
 
+func (k ForecastViewKeyMap) ShortHelp() []key.Binding {
+	return []key.Binding{k.Help, k.Quit}
+}
+
+func (k ForecastViewKeyMap) FullHelp() [][]key.Binding {
+	return [][]key.Binding{
+		{k.LineUp, k.LineDown, k.GotoTop, k.GotoBottom},
+		{k.DatePrevious, k.DateNext, k.SetToday, k.Done, k.Delete, k.EditEvent},
+		{k.AddEvent, k.EditBalance, k.FocusTable},
+		{k.Reload, k.Save, k.Quit},
+	}
+}
+
 type ForecastView struct {
-	keymap  ForecastViewKeyMap
+	keymap ForecastViewKeyMap
+	help   help.Model
+
 	table   table.Model
 	balance textinput.Model
 
@@ -152,7 +183,9 @@ func NewForecastView(account *Account) ForecastView {
 	b.Prompt = "Current balance: "
 
 	f := ForecastView{
-		keymap:  NewForecastViewKeyMap(),
+		keymap: NewForecastViewKeyMap(),
+		help:   help.New(),
+
 		table:   t,
 		balance: b,
 
@@ -222,6 +255,8 @@ func (f *ForecastView) View() string {
 	b.WriteString("\n\n")
 	b.WriteString(f.table.View())
 	b.WriteString("\n\n")
+	b.WriteString(f.help.View(f.keymap))
+	b.WriteString("\n")
 	return b.String()
 }
 
@@ -246,8 +281,12 @@ func (f *ForecastView) handleTableInput(msg tea.Msg) tea.Cmd {
 	tx := f.transactions[f.table.Cursor()]
 
 	switch msg := msg.(type) {
+	case tea.WindowSizeMsg:
+		f.help.Width = msg.Width
 	case tea.KeyMsg:
 		switch {
+		case key.Matches(msg, f.keymap.Help):
+			f.help.ShowAll = !f.help.ShowAll
 		case key.Matches(msg, f.keymap.DatePrevious):
 			f.account.txDatePrevious(&tx)
 		case key.Matches(msg, f.keymap.DateNext):
@@ -260,7 +299,6 @@ func (f *ForecastView) handleTableInput(msg tea.Msg) tea.Cmd {
 			f.account.txSetToToday(&tx)
 		case key.Matches(msg, f.keymap.Reload):
 			f.account.reload()
-
 		case key.Matches(msg, f.keymap.Save):
 			f.account.save()
 		case key.Matches(msg, f.keymap.EditBalance):
@@ -277,15 +315,13 @@ func (f *ForecastView) handleTableInput(msg tea.Msg) tea.Cmd {
 }
 
 func (f *ForecastView) handleBalanceInput(msg tea.Msg) tea.Cmd {
-	mainKeyMap := NewMainKeyMap()
-
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch {
 		case key.Matches(msg, f.keymap.FocusTable):
 			f.balance.Blur()
 			f.table.Focus()
-		case key.Matches(msg, mainKeyMap.Confirm):
+		case key.Matches(msg, f.keymap.Confirm):
 			if result, err := strconv.ParseFloat(f.balance.Value(), 32); err == nil {
 				f.account.Balance = float32(result)
 			}

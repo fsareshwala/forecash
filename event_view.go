@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
@@ -15,6 +16,8 @@ import (
 type EventViewKeyMap struct {
 	PreviousField key.Binding
 	NextField     key.Binding
+	Help          key.Binding
+	Confirm       key.Binding
 	Cancel        key.Binding
 }
 
@@ -28,10 +31,29 @@ func NewEventViewKeyMap() EventViewKeyMap {
 			key.WithKeys("shift+tab"),
 			key.WithHelp("shift+tab", "next field"),
 		),
+		Help: key.NewBinding(
+			key.WithKeys("?"),
+			key.WithHelp("?", "toggle help"),
+		),
+		Confirm: key.NewBinding(
+			key.WithKeys("enter"),
+			key.WithHelp("enter", "confirm"),
+		),
 		Cancel: key.NewBinding(
 			key.WithKeys("esc"),
 			key.WithHelp("esc", "cancel"),
 		),
+	}
+}
+
+func (k EventViewKeyMap) ShortHelp() []key.Binding {
+	return []key.Binding{k.Help, k.Confirm, k.Cancel}
+}
+
+func (k EventViewKeyMap) FullHelp() [][]key.Binding {
+	return [][]key.Binding{
+		{k.PreviousField, k.NextField},
+		{k.Confirm, k.Cancel},
 	}
 }
 
@@ -48,7 +70,9 @@ const (
 )
 
 type EventView struct {
-	keymap  EventViewKeyMap
+	keymap EventViewKeyMap
+	help   help.Model
+
 	inputs  []textinput.Model
 	focused FocusedField
 
@@ -92,7 +116,9 @@ func NewEventView() EventView {
 	inputs[month].Focus()
 
 	return EventView{
-		keymap:  NewEventViewKeyMap(),
+		keymap: NewEventViewKeyMap(),
+		help:   help.New(),
+
 		inputs:  inputs,
 		focused: description,
 	}
@@ -221,17 +247,24 @@ func (e *EventView) View() string {
 	b.WriteString(e.inputs[amount].View())
 	b.WriteString("\n\n")
 
+	b.WriteString(e.help.View(e.keymap))
+	b.WriteString("\n")
+
 	return b.String()
 }
 
 func (e *EventView) Update(msg tea.Msg) tea.Cmd {
 	switch msg := msg.(type) {
+	case tea.WindowSizeMsg:
+		e.help.Width = msg.Width
 	case tea.KeyMsg:
-		switch msg.Type {
-		case tea.KeyTab:
-			e.nextInput()
-		case tea.KeyShiftTab:
+		switch {
+		case key.Matches(msg, e.keymap.Help):
+			e.help.ShowAll = !e.help.ShowAll
+		case key.Matches(msg, e.keymap.PreviousField):
 			e.prevInput()
+		case key.Matches(msg, e.keymap.NextField):
+			e.nextInput()
 		}
 
 		for i := range e.inputs {
