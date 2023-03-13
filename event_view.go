@@ -24,12 +24,12 @@ type EventViewKeyMap struct {
 func NewEventViewKeyMap() EventViewKeyMap {
 	return EventViewKeyMap{
 		PreviousField: key.NewBinding(
-			key.WithKeys("tab"),
-			key.WithHelp("tab", "previous field"),
+			key.WithKeys("shift+tab"),
+			key.WithHelp("shift+tab", "previous field"),
 		),
 		NextField: key.NewBinding(
-			key.WithKeys("shift+tab"),
-			key.WithHelp("shift+tab", "next field"),
+			key.WithKeys("tab"),
+			key.WithHelp("tab", "next field"),
 		),
 		Help: key.NewBinding(
 			key.WithKeys("?"),
