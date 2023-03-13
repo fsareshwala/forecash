@@ -113,8 +113,6 @@ func NewEventView() EventView {
 	inputs[amount].Prompt = "$"
 	inputs[amount].Validate = validateFloat
 
-	inputs[month].Focus()
-
 	return EventView{
 		keymap: NewEventViewKeyMap(),
 		help:   help.New(),
@@ -166,22 +164,23 @@ func (e *EventView) setEvent(event *Event) {
 	e.inputs[description].SetValue(event.Description)
 	e.inputs[amount].SetValue(fmt.Sprintf("%.02f", event.Amount))
 
-	// setting value apparently focuses the textinput
-	for i := range e.inputs {
-		e.inputs[i].Blur()
-	}
-
-	e.inputs[month].Focus()
+	e.focused = description
+	e.focus()
 }
 
 func (e *EventView) unsetEvent() {
 	e.event = nil
-
 	for i := range e.inputs {
 		e.inputs[i].Reset()
 	}
 
-	e.inputs[month].Focus()
+	now := time.Now()
+	e.inputs[month].SetValue(fmt.Sprintf("%d", now.Month()))
+	e.inputs[day].SetValue(fmt.Sprintf("%d", now.Day()))
+	e.inputs[year].SetValue(fmt.Sprintf("%d", now.Year()))
+
+	e.focused = description
+	e.focus()
 }
 
 func validateMonth(str string) error {
@@ -266,19 +265,19 @@ func (e *EventView) Update(msg tea.Msg) tea.Cmd {
 		case key.Matches(msg, e.keymap.NextField):
 			e.nextInput()
 		}
-
-		for i := range e.inputs {
-			e.inputs[i].Blur()
-		}
-
-		e.inputs[e.focused].Focus()
 	}
 
-	for i := range e.inputs {
-		e.inputs[i], _ = e.inputs[i].Update(msg)
-	}
-
+	e.focus()
+	e.inputs[e.focused], _ = e.inputs[e.focused].Update(msg)
 	return nil
+}
+
+func (e *EventView) focus() {
+	for i := range e.inputs {
+		e.inputs[i].Blur()
+	}
+
+	e.inputs[e.focused].Focus()
 }
 
 func (e *EventView) nextInput() {

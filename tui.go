@@ -46,9 +46,11 @@ func (t Tui) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case t.state == stateForecastView && key.Matches(msg, f.AddEvent):
 			t.eventView.unsetEvent()
 			t.state = stateEventView
+			return t, nil
 		case t.state == stateForecastView && key.Matches(msg, f.EditEvent):
 			t.eventView.setEvent(t.forecastView.getSelectedTransaction().event)
 			t.state = stateEventView
+			return t, nil
 		case t.state == stateForecastView && key.Matches(msg, f.Quit):
 			return t, tea.Quit
 
@@ -56,6 +58,7 @@ func (t Tui) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case t.state == stateEventView && key.Matches(msg, f.FocusTable):
 			t.eventView.unsetEvent()
 			t.state = stateForecastView
+			return t, nil
 		case t.state == stateEventView && key.Matches(msg, f.Confirm):
 			// we must call getEvent in both add or edit mode: it pulls data from textinputs
 			event := t.eventView.getEvent()
@@ -65,6 +68,7 @@ func (t Tui) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 			t.eventView.unsetEvent()
 			t.state = stateForecastView
+			return t, nil
 		}
 	}
 
