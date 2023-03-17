@@ -68,6 +68,7 @@ func (t Tui) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 			t.eventView.unsetEvent()
 			t.state = stateForecastView
+			t.forecastView.regenerateRows()
 			return t, nil
 		}
 	}
