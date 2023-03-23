@@ -264,6 +264,8 @@ func (f *ForecastView) Update(msg tea.Msg) tea.Cmd {
 	var cmd tea.Cmd
 
 	switch msg := msg.(type) {
+	case tea.WindowSizeMsg:
+		f.help.Width = msg.Width
 	case tea.KeyMsg:
 		if f.table.Focused() {
 			cmd = f.handleTableInput(msg)
@@ -281,8 +283,6 @@ func (f *ForecastView) handleTableInput(msg tea.Msg) tea.Cmd {
 	tx := f.transactions[f.table.Cursor()]
 
 	switch msg := msg.(type) {
-	case tea.WindowSizeMsg:
-		f.help.Width = msg.Width
 	case tea.KeyMsg:
 		switch {
 		case key.Matches(msg, f.keymap.Help):
