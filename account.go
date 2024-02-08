@@ -33,6 +33,10 @@ func (t byDate) Swap(i int, j int) {
 	t[i], t[j] = t[j], t[i]
 }
 func (t byDate) Less(i int, j int) bool {
+	if t[i].date.Equal(t[j].date) {
+		return t[i].event.Amount > t[j].event.Amount
+	}
+
 	return t[i].date.Before(t[j].date)
 }
 
