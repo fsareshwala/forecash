@@ -154,7 +154,7 @@ func NewForecastView(account *Account) ForecastView {
 		{Title: "Description", Width: 40},
 		{Title: "Income", Width: 15},
 		{Title: "Expense", Width: 15},
-		{Title: "Balance", Width: 15},
+		{Title: "Balance", Width: 20},
 	}
 
 	style := table.DefaultStyles()
