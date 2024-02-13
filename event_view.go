@@ -218,6 +218,11 @@ func validateInteger(str string) error {
 }
 
 func validateFloat(str string) error {
+	// Allow the beginning of a negative number
+	if str == "-" {
+		return nil
+	}
+
 	// The textinput will already ensure that the number is of the correct length
 	_, err := strconv.ParseFloat(str, 32)
 	return err
