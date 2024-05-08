@@ -280,6 +280,10 @@ func (f *ForecastView) Update(msg tea.Msg) tea.Cmd {
 }
 
 func (f *ForecastView) handleTableInput(msg tea.Msg) tea.Cmd {
+	if len(f.transactions) == 0 {
+		return nil
+	}
+
 	tx := f.transactions[f.table.Cursor()]
 
 	switch msg := msg.(type) {
