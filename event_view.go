@@ -11,6 +11,7 @@ import (
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/fsareshwala/forecash/selection"
 )
 
 type EventViewKeyMap struct {
@@ -65,7 +66,7 @@ const (
 	year
 	description
 	amount
-	// repeat
+	repeat
 	sentinel
 )
 
@@ -73,10 +74,11 @@ type EventView struct {
 	keymap EventViewKeyMap
 	help   help.Model
 
-	inputs  []textinput.Model
-	focused FocusedField
+	inputs []textinput.Model
+	repeat selection.Model
 
-	event *Event
+	focused FocusedField
+	event   *Event
 }
 
 func NewEventView() EventView {
@@ -113,11 +115,21 @@ func NewEventView() EventView {
 	inputs[amount].Prompt = "$"
 	inputs[amount].Validate = validateFloat
 
+	repeat := selection.New([]string{
+		Once.toString(),
+		Daily.toString(),
+		Weekly.toString(),
+		Biweekly.toString(),
+		Monthly.toString(),
+		Yearly.toString(),
+	})
+
 	return EventView{
 		keymap: NewEventViewKeyMap(),
 		help:   help.New(),
 
 		inputs:  inputs,
+		repeat:  repeat,
 		focused: description,
 	}
 }
@@ -141,6 +153,7 @@ func (e *EventView) getEvent() *Event {
 	input_day, _ := strconv.ParseInt(e.inputs[day].Value(), 10, 8)
 	input_year, _ := strconv.ParseInt(e.inputs[year].Value(), 10, 16)
 	input_amount, _ := strconv.ParseFloat(e.inputs[amount].Value(), 32)
+	input_repeat := Frequency(e.repeat.Selected())
 
 	new_month := time.Month(input_month)
 	new_day := int(input_day)
@@ -150,9 +163,8 @@ func (e *EventView) getEvent() *Event {
 	event.Date = time.Date(new_year, new_month, new_day, 0, 0, 0, 0, time.Local)
 	event.Description = e.inputs[description].Value()
 	event.Amount = new_amount
+	event.Frequency = input_repeat
 
-	// TODO: have to add ability to select a repeat to the form, then can do this logic correctly.
-	// Until then, just use the frequency from the already existing event, or once for a new event.
 	return event
 }
 
@@ -163,6 +175,7 @@ func (e *EventView) setEvent(event *Event) {
 	e.inputs[year].SetValue(fmt.Sprintf("%d", event.Date.Year()))
 	e.inputs[description].SetValue(event.Description)
 	e.inputs[amount].SetValue(fmt.Sprintf("%.02f", event.Amount))
+	e.repeat.SetSelected(int(event.Frequency))
 
 	e.focused = description
 	e.focus()
@@ -173,6 +186,7 @@ func (e *EventView) unsetEvent() {
 	for i := range e.inputs {
 		e.inputs[i].Reset()
 	}
+	e.repeat.Reset()
 
 	now := time.Now()
 	e.inputs[month].SetValue(fmt.Sprintf("%d", now.Month()))
@@ -251,6 +265,11 @@ func (e *EventView) View() string {
 	b.WriteString(e.inputs[amount].View())
 	b.WriteString("\n\n")
 
+	b.WriteString(style.Render("Repeat"))
+	b.WriteString("\n")
+	b.WriteString(e.repeat.View())
+	b.WriteString("\n\n")
+
 	b.WriteString(e.help.View(e.keymap))
 	b.WriteString("\n")
 
@@ -273,16 +292,44 @@ func (e *EventView) Update(msg tea.Msg) tea.Cmd {
 	}
 
 	e.focus()
-	e.inputs[e.focused], _ = e.inputs[e.focused].Update(msg)
+	switch e.focused {
+	case month:
+		e.inputs[month], _ = e.inputs[month].Update(msg)
+	case day:
+		e.inputs[day], _ = e.inputs[day].Update(msg)
+	case year:
+		e.inputs[year], _ = e.inputs[year].Update(msg)
+	case description:
+		e.inputs[description], _ = e.inputs[description].Update(msg)
+	case amount:
+		e.inputs[amount], _ = e.inputs[amount].Update(msg)
+	case repeat:
+		e.repeat, _ = e.repeat.Update(msg)
+	}
+
 	return nil
 }
 
 func (e *EventView) focus() {
+	e.repeat.Blur()
 	for i := range e.inputs {
 		e.inputs[i].Blur()
 	}
 
-	e.inputs[e.focused].Focus()
+	switch e.focused {
+	case month:
+		e.inputs[month].Focus()
+	case day:
+		e.inputs[day].Focus()
+	case year:
+		e.inputs[year].Focus()
+	case description:
+		e.inputs[description].Focus()
+	case amount:
+		e.inputs[amount].Focus()
+	case repeat:
+		e.repeat.Focus()
+	}
 }
 
 func (e *EventView) nextInput() {

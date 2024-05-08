@@ -15,6 +15,25 @@ const (
 	Yearly
 )
 
+func (f Frequency) toString() string {
+	switch f {
+	case Once:
+		return "Once"
+	case Daily:
+		return "Daily"
+	case Weekly:
+		return "Weekly"
+	case Biweekly:
+		return "Biweekly"
+	case Monthly:
+		return "Monthly"
+	case Yearly:
+		return "Yearly"
+	}
+
+	return "Unknown"
+}
+
 type Event struct {
 	Date        time.Time
 	Description string
