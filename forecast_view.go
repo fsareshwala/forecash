@@ -279,6 +279,18 @@ func (f *ForecastView) Update(msg tea.Msg) tea.Cmd {
 	return cmd
 }
 
+func (f *ForecastView) setCursorToTransactionWithHash(hash uint64) {
+	index := 0
+	for i, transaction := range f.transactions {
+		if transaction.hash == hash {
+			index = i
+			break
+		}
+	}
+
+	f.table.SetCursor(index)
+}
+
 func (f *ForecastView) handleTableInput(msg tea.Msg) tea.Cmd {
 	if len(f.transactions) == 0 {
 		return nil
@@ -292,9 +304,15 @@ func (f *ForecastView) handleTableInput(msg tea.Msg) tea.Cmd {
 		case key.Matches(msg, f.keymap.Help):
 			f.help.ShowAll = !f.help.ShowAll
 		case key.Matches(msg, f.keymap.DatePrevious):
+			hash := tx.hash
 			f.account.txDatePrevious(&tx)
+			f.regenerateRows()
+			f.setCursorToTransactionWithHash(hash)
 		case key.Matches(msg, f.keymap.DateNext):
+			hash := tx.hash
 			f.account.txDateNext(&tx)
+			f.regenerateRows()
+			f.setCursorToTransactionWithHash(hash)
 		case key.Matches(msg, f.keymap.Delete):
 			f.account.txComplete(&tx, false)
 		case key.Matches(msg, f.keymap.Done):

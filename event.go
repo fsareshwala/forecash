@@ -64,10 +64,13 @@ func (e *Event) predict(until time.Time) []Transaction {
 
 	now := e.Date
 	for now.Before(until) {
-		transactions = append(transactions, Transaction{
+		t := Transaction{
 			date:  now,
 			event: e,
-		})
+		}
+
+		t.calculateHash()
+		transactions = append(transactions, t)
 
 		now = e.nextOccurrence(now)
 	}

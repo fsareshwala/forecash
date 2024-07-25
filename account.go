@@ -1,8 +1,12 @@
 package main
 
 import (
+	"bytes"
+	"crypto/md5"
+	"encoding/binary"
 	"encoding/json"
 	"log"
+	"math"
 	"os"
 	"sort"
 	"strings"
@@ -14,6 +18,7 @@ import (
 type Transaction struct {
 	date  time.Time
 	event *Event
+	hash  uint64
 }
 
 func (t *Transaction) repeats() bool {
@@ -22,6 +27,24 @@ func (t *Transaction) repeats() bool {
 
 func (t *Transaction) isFirstOccurrence() bool {
 	return t.date.Equal(t.event.Date)
+}
+
+func (t *Transaction) calculateHash() {
+	hasher := md5.New()
+
+	amount := make([]byte, 4)
+	binary.LittleEndian.PutUint32(amount, math.Float32bits(t.event.Amount))
+
+	frequency := make([]byte, 1)
+	frequency[0] = uint8(t.event.Frequency)
+
+	hasher.Write([]byte(t.event.Description))
+	hasher.Write(amount)
+	hasher.Write(frequency)
+
+	// calculate the hash and store it in the transaction
+	hash := hasher.Sum(nil)
+	binary.Read(bytes.NewReader(hash[:8]), binary.LittleEndian, &t.hash)
 }
 
 type byDate []Transaction
@@ -100,8 +123,7 @@ func (a *Account) predict(until time.Time) []Transaction {
 	transactions := []Transaction{}
 
 	for i := range a.Events {
-		event := &a.Events[i]
-		transactions = append(transactions, event.predict(until)...)
+		transactions = append(transactions, a.Events[i].predict(until)...)
 	}
 
 	sort.Sort(byDate(transactions))
