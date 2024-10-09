@@ -174,15 +174,16 @@ func (a *Account) txSetToToday(tx *Transaction) {
 		return
 	}
 
+	now := time.Now().Round(24 * time.Hour)
 	if !tx.repeats() {
 		// no need to do any splitting logic if the event never repeats
-		tx.event.Date = time.Now().Round(24 * time.Hour)
+		tx.event.Date = time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.Local)
 		return
 	}
 
 	new_event := *tx.event
 	new_event.Frequency = Once
-	new_event.Date = time.Now().Round(24 * time.Hour)
+	new_event.Date = time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.Local)
 	a.Events = append(a.Events, new_event)
 
 	tx.event.Date = tx.event.nextOccurrence(tx.event.Date)
